@@ -7,7 +7,7 @@ This command-line application serves as an interface for employers to view and e
 ```
 
 ## Database Setup
-In any MySQL administration tool, run [**schema.sql**](db/schema.sql) to start up the database for the use of this application. Optionally, [**seed.sql**](db/seed.sql) file is provided for populating sample data.
+In any MySQL administration tool, run [**schema.sql**](db/schema.sql) to start up the database for the use of this application. Optionally, [**seed.sql**](db/seed.sql) file can be run for populating sample data.
 
 ## Configuration / Environment Variable
 Before starting the application, please change variables in [**.env**](.env) to match up your MySQL login credentials.

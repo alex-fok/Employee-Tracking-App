@@ -4,6 +4,7 @@ require('dotenv').config();
 
 let departmentArr = [];
 let roleArr = [];
+let employeeArr = [];
 const ID_OFFSET = 1;
 
 const db_config = {
@@ -15,8 +16,9 @@ const db_config = {
 }
 
 const updateDepartmentArr = () => {
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
         connection.query("SELECT name FROM department", (err, results) => {
+            if (err) throw err;
             departmentArr = results.map(el => el.name);
             console.log(departmentArr);
             resolve();
@@ -25,10 +27,23 @@ const updateDepartmentArr = () => {
 }
 
 const updateRoleArr = () => {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         connection.query("SELECT title FROM role", (err, results) => {
-            roleArr = results.map(el => el.titles);
+            if (err) throw err;
+            roleArr = results.map(el => el.title);
             console.log(roleArr);
+            resolve();
+        })
+    })
+}
+
+const updateEmployeeArr = () => {
+    return new Promise(resolve => {
+        connection.query("SELECT first_name, last_name FROM employee", (err, results) => {
+            if (err) throw err;
+            
+            employeeArr = results.map(el => `${el.first_name} ${el.last_name}`)
+            
             resolve();
         })
     })
@@ -39,8 +54,12 @@ const connection = mysql.createConnection(db_config);
 connection.connect( (err) => {
     if (err) throw err;
     connection.query("SELECT name FROM department", (err, results) => {
+        // Cache information from database, to minimize number of accesses
         departmentArr = results.map(el => el.name);
-        updateDepartmentArr().then(updateRoleArr).then(menu);
+        updateDepartmentArr()
+        .then(updateRoleArr)
+        .then(updateEmployeeArr)
+        .then(menu);
     });
 });
 
@@ -85,7 +104,7 @@ const inquireRole = () => {
 }
 
 const inquireEmployee = () => {
-    inquirer.prompt([
+    return inquirer.prompt([
         {
             type: "input",
             name: "firstName",
@@ -103,22 +122,29 @@ const inquireEmployee = () => {
             choices: roleArr
         },
         {
-            type: "input",
+            type: "list",
             name: "manager",
-            message: "Manager:"
+            message: "Manager:",
+            choices: employeeArr
+
         }
     ]).then(answers => ({table: "employee", row: {
         first_name: answers.firstName,
         last_name: answers.lastName,
         role_id: roleArr.indexOf(answers.role) + ID_OFFSET,
-        manager_id: managerArr.indexOf(answers.manager) < 0 ? null : managerArr.indexOf(answers.manager) + ID_OFFSET
+        manager_id: employeeArr.indexOf(answers.manager) < 0 ? null : employeeArr.indexOf(answers.manager) + ID_OFFSET
     }}))
 }
 
 const add = (data) => {
+    const update = {
+        "department" : () => updateDepartmentArr.then(menu),
+        "role": () => updateRoleArr().then(menu),
+        "employee": () => updateEmployeeArr().then(menu)
+    }
     connection.query(`INSERT INTO ${data.table} SET ?`, data.row, (err) => {
         if (err) throw err;
-        menu();
+        update[data.table]();
     })
 }
 

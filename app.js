@@ -63,7 +63,7 @@ connection.connect( (err) => {
     });
 });
 
-const inquireDepartment = () => {
+const addDepartment = () => {
     return inquirer.prompt([
         {
             type: "input",
@@ -73,7 +73,7 @@ const inquireDepartment = () => {
     ]).then(answers => ({table: "department", row: { name: answers.department }}))
 }
 
-const inquireRole = () => {
+const addRole = () => {
     return inquirer.prompt([
         {
             type: "input",
@@ -103,7 +103,7 @@ const inquireRole = () => {
     ));
 }
 
-const inquireEmployee = () => {
+const addEmployee = () => {
     return inquirer.prompt([
         {
             type: "input",
@@ -132,11 +132,11 @@ const inquireEmployee = () => {
         first_name: answers.firstName,
         last_name: answers.lastName,
         role_id: roleArr.indexOf(answers.role) + ID_OFFSET,
-        manager_id: employeeArr.indexOf(answers.manager) < 0 ? null : employeeArr.indexOf(answers.manager) + ID_OFFSET
+        manager_id: employeeArr.indexOf(answers.manager) + ID_OFFSET
     }}))
 }
 
-const add = (data) => {
+const addRow = (data) => {
     const update = {
         "department" : () => updateDepartmentArr.then(menu),
         "role": () => updateRoleArr().then(menu),
@@ -157,23 +157,90 @@ const view = (table) => {
     })
 }
 
+const viewDepartments = () => {
+    const query = "SELECT name AS department FROM department";
+    connection.query(query, (err, results) => {
+        if (err) throw err;
+        console.table(results);
+        menu();
+    })
+}
+
+const viewRoles = () => {
+    const query = "SELECT r.title, r.salary, d.name FROM role r, department d WHERE r.department_id = d.id";
+    connection.query(query, (err, results) => {
+        if (err) throw err;
+        console.table(results);
+        menu();
+    })
+}
+
+const viewEmployees = () => {
+    const query = "SELECT e.id, e.first_name, e.last_name, r.title, d.name AS department, r.salary, e.manager_id FROM employee e, role r, department d WHERE e.role_id = r.id AND d.id = r.department_id";
+    connection.query(query, (err, results) => {
+        if (err) throw err;
+        const print = results.map(row => 
+            ({
+                first_name: row.first_name,
+                last_name: row.last_name,
+                title: row.title,
+                department: row.department,
+                salary: row.salary,
+                manager: employeeArr[row.manager_id - ID_OFFSET] || "NONE"
+            }));
+        console.table(print);
+        menu();
+    });
+}
+
+const updateEmployeeRole = () => {
+    return inquirer.prompt([
+        {
+            type: "list",
+            name: "employee",
+            message: "Employee:",
+            choices: employeeArr
+        },
+        {
+            type: "list",
+            name: "role",
+            message: "Change Role To:",
+            choices: roleArr
+        }
+    ]).then(answers => (
+        {
+            table: "employee", 
+            row: {
+                role_id: roleArr.indexOf(answers.role) + ID_OFFSET
+            },
+            at: employeeArr.indexOf(answers.employee) + ID_OFFSET
+    }))
+}
+
+const updateRow = (data) => {
+    connection.query(`UPDATE ${data.table} SET ? WHERE id = ?`, [data.row, data.at], (err) => {
+        if (err) throw err;
+        menu();
+    })
+}
+
 const deptNotFound = () => { console.log("No Existing Departments Found"); menu(); }
 const roleNotFound = () => { console.log("No Existing Roles Found"); menu(); }
 
-const updateEmployeeRole = () => {menu();}
+
 const actions = {
-    "Add Department": () => inquireDepartment().then(add),
-    "Add Role": () => departmentArr.length > 0 ? inquireRole().then(add) : deptNotFound,
+    "Add Department": () => addDepartment().then(addRow),
+    "Add Role": () => departmentArr.length > 0 ? addRole().then(addRow) : deptNotFound,
     "Add Employee": () =>
         departmentArr.length > 0
             ? roleArr.length > 0
-                ? inquireEmployee().then(add)
+                ? addEmployee().then(addRow)
                 : roleNotFound()
             : deptNotFound(),
-    "View Departments": () => view("department"),
-    "View Roles": () => view("role"),
-    "View Employees": () => view("employee"),
-    "Update Employee role": updateEmployeeRole,
+    "View Departments": viewDepartments,
+    "View Roles": viewRoles,
+    "View Employees": viewEmployees,
+    "Update Employee role": () => updateEmployeeRole().then(updateRow),
     "Quit App": () => connection.end()
 }
 

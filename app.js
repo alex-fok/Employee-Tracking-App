@@ -39,7 +39,7 @@ connection.connect( (err) => {
     if (err) throw err;
     connection.query("SELECT name FROM department", (err, results) => {
         departmentArr = results.map(el => el.name);
-        updateDepartmentArr().then(updateRoleArr).then(startApp);
+        updateDepartmentArr().then(updateRoleArr).then(menu);
     });
 });
 
@@ -66,9 +66,10 @@ const inquireRole = () => {
             message: "Salary:"
         },
         {
-            type: "input",
+            type: "list",
             name: "department",
-            message: "Department:"
+            message: "Department:",
+            choices: departmentArr
         }
     ]).then(answers => ({
         title: answers.title,
@@ -111,6 +112,7 @@ const inquireEmployee = () => {
 const add = (data) => {
     connection.query(`INSERT INTO ${data.table} SET ?`, data.row, (err) => {
         if (err) throw err;
+        menu();
     })
 }
 
@@ -118,7 +120,8 @@ const view = (table) => {
     const query = `SELECT * from ${table}`;
     connection.query(query, (err, results) => {
         if (err) throw err;
-        console.table(results)
+        console.table(results);
+        menu();
     })
 }
 
@@ -142,7 +145,7 @@ const actions = {
     "Quit": () => connection.end()
 }
 
-const startApp = () => {
+const menu = () => {
     inquirer.prompt([{
         type: "list",
         name: "action",
@@ -154,7 +157,8 @@ const startApp = () => {
             "View Deparments",
             "View Roles",
             "View Employees",
-            "Update Employee role"
+            "Update Employee role",
+            "Quit App"
         ]
     }]).then(results => {
         actions[results.action]();

@@ -20,7 +20,6 @@ const updateDepartmentArr = () => {
         connection.query("SELECT name FROM department", (err, results) => {
             if (err) throw err;
             departmentArr = results.map(el => el.name);
-            console.log(departmentArr);
             resolve();
         });
     });
@@ -31,7 +30,6 @@ const updateRoleArr = () => {
         connection.query("SELECT title FROM role", (err, results) => {
             if (err) throw err;
             roleArr = results.map(el => el.title);
-            console.log(roleArr);
             resolve();
         })
     })
@@ -41,9 +39,7 @@ const updateEmployeeArr = () => {
     return new Promise(resolve => {
         connection.query("SELECT first_name, last_name FROM employee", (err, results) => {
             if (err) throw err;
-            
             employeeArr = results.map(el => `${el.first_name} ${el.last_name}`)
-            
             resolve();
         })
     })
@@ -54,7 +50,7 @@ const connection = mysql.createConnection(db_config);
 connection.connect( (err) => {
     if (err) throw err;
     connection.query("SELECT name FROM department", (err, results) => {
-        // Cache information from database, to minimize number of accesses
+        // Cache information from database to minimize the number of accesses
         departmentArr = results.map(el => el.name);
         updateDepartmentArr()
         .then(updateRoleArr)
@@ -145,15 +141,6 @@ const addRow = (data) => {
     connection.query(`INSERT INTO ${data.table} SET ?`, data.row, (err) => {
         if (err) throw err;
         update[data.table]();
-    })
-}
-
-const view = (table) => {
-    const query = `SELECT * from ${table}`;
-    connection.query(query, (err, results) => {
-        if (err) throw err;
-        console.table(results);
-        menu();
     })
 }
 

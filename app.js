@@ -13,18 +13,11 @@ const db_config = {
     database: process.env.DB_DB,
 }
 
-const connection = mysql.createConnection(db_config);
-
-connection.connect( (err) => {
-    if (err) throw err;
-    updateDepartmentArr();
-    startApp();
-});
-
 const updateDepartmentArr = () => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         connection.query("SELECT name FROM department", (err, results) => {
             departmentArr = results.map(el => el.name);
+            console.log(departmentArr);
             resolve();
         });
     });
@@ -34,10 +27,21 @@ const updateRoleArr = () => {
     return new Promise((resolve) => {
         connection.query("SELECT title FROM role", (err, results) => {
             roleArr = results.map(el => el.titles);
+            console.log(roleArr);
             resolve();
         })
     })
 }
+
+const connection = mysql.createConnection(db_config);
+
+connection.connect( (err) => {
+    if (err) throw err;
+    connection.query("SELECT name FROM department", (err, results) => {
+        departmentArr = results.map(el => el.name);
+        updateDepartmentArr().then(updateRoleArr).then(startApp);
+    });
+});
 
 const inquireDepartment = () => {
     return inquirer.prompt([
@@ -54,17 +58,17 @@ const inquireRole = () => {
         {
             type: "input",
             name: "title",
-            message: "Title"
+            message: "Title:"
         },
         {
             type: "input",
             name: "salary",
-            message: "Salary"
+            message: "Salary:"
         },
         {
             type: "input",
             name: "department",
-            message: "Department"
+            message: "Department:"
         }
     ]).then(answers => ({
         title: answers.title,
@@ -78,26 +82,29 @@ const inquireEmployee = () => {
         {
             type: "input",
             name: "firstName",
-            message: "First Name"
+            message: "First Name:"
         },
         {
             type: "input",
             name: "lastName",
-            message: "Last Name"
+            message: "Last Name:"
         },
         {
-            type: "input",
+            type: "list",
             name: "role",
-            message: "Role"
+            message: "Role:",
+            choices: roleArr
         },
         {
             type: "input",
             name: "manager",
-            message: "Manager"
+            message: "Manager:"
         }
     ]).then(answers => ({table: "employee", row: {
         first_name: answers.firstName,
-        last_name: answers.lastName
+        last_name: answers.lastName,
+        role_id: roleArr.indexOf(answers.role),
+        manager_id: managerArr.indexOf(answers.manager) < 0 ? null : managerArr.indexOf(answers.manager)
     }}))
 }
 
@@ -115,23 +122,31 @@ const view = (table) => {
     })
 }
 
-const noExistingDepartment = () => console.log("No Existing Department");
+const deptNotFound = () => console.log("No Existing Departments Found");
+const roleNotFound = () => console.log("No Existing Roles Found");
 
 const updateEmployeeRole = () => {}
 const actions = {
-    "Add Department": () => {inquireDepartment().then(add)},
-    "Add Role": () => inquireRole.then(add),
-    "Add Employee": () => departmentArr.length > 0 ? inquireEmployee.then(add) : noExistingDepartment(),
+    "Add Department": () => inquireDepartment().then(add),
+    "Add Role": () => department.length > 0 ? inquireRole.then(add) : deptNotFound,
+    "Add Employee": () =>
+        departmentArr.length > 0
+            ? roleArr.length > 0
+                ? inquireEmployee.then(add)
+                : roleNotFound()
+            : deptNotFound(),
     "View Deparments": () => view("department"),
     "View Roles": () => view("role"),
     "View Employees": () => view("employee"),
-    "Update Employee role": updateEmployeeRole
+    "Update Employee role": updateEmployeeRole,
+    "Quit": () => connection.end()
 }
 
 const startApp = () => {
     inquirer.prompt([{
         type: "list",
         name: "action",
+        message: "Choose an action:",
         choices:[
             "Add Department",
             "Add Role",

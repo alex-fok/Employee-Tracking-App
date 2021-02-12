@@ -3,7 +3,7 @@ This command-line application serves as an interface for employers to view and e
 
 ## Install
 ```
-  npm install
+    npm install
 ```
 
 ## Database Setup

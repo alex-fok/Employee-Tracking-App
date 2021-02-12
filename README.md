@@ -16,3 +16,6 @@ Before starting the application, please change variables in [**.env**](.env) to 
 ```
     npm start
 ```
+
+## Video URL
+https://drive.google.com/file/d/16MWmp79oNukxcNuyUYt1MnoGIVP1QHEe/view

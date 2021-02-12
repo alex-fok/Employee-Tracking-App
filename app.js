@@ -134,7 +134,7 @@ const addEmployee = () => {
 
 const addRow = (data) => {
     const update = {
-        "department" : () => updateDepartmentArr.then(menu),
+        "department" : () => updateDepartmentArr().then(menu),
         "role": () => updateRoleArr().then(menu),
         "employee": () => updateEmployeeArr().then(menu)
     }

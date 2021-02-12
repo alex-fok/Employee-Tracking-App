@@ -214,7 +214,7 @@ const roleNotFound = () => { console.log("No Existing Roles Found"); menu(); }
 
 const actions = {
     "Add Department": () => addDepartment().then(addRow),
-    "Add Role": () => departmentArr.length > 0 ? addRole().then(addRow) : deptNotFound,
+    "Add Role": () => departmentArr.length > 0 ? addRole().then(addRow) : deptNotFound(),
     "Add Employee": () =>
         departmentArr.length > 0
             ? roleArr.length > 0

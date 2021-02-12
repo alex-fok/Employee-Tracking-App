@@ -52,10 +52,7 @@ connection.connect( (err) => {
     connection.query("SELECT name FROM department", (err, results) => {
         // Cache information from database to minimize the number of accesses
         departmentArr = results.map(el => el.name);
-        updateDepartmentArr()
-        .then(updateRoleArr)
-        .then(updateEmployeeArr)
-        .then(menu);
+        Promise.all([updateDepartmentArr(), updateRoleArr(), updateEmployeeArr()]).then(menu);
     });
 });
 

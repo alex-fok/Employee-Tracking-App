@@ -118,14 +118,14 @@ const addEmployee = () => {
             type: "list",
             name: "manager",
             message: "Manager:",
-            choices: employeeArr
+            choices: ["NONE", ...employeeArr]
 
         }
     ]).then(answers => ({table: "employee", row: {
         first_name: answers.firstName,
         last_name: answers.lastName,
         role_id: roleArr.indexOf(answers.role) + ID_OFFSET,
-        manager_id: employeeArr.indexOf(answers.manager) + ID_OFFSET
+        manager_id: "NONE" ? null : employeeArr.indexOf(answers.manager) + ID_OFFSET
     }}))
 }
 
